@@ -1,5 +1,6 @@
 import os
 import base64
+import peewee
 
 from flask import Flask, render_template, request, redirect, url_for, session
 
@@ -24,12 +25,16 @@ def add_donation():
     if request.method == 'POST':
         uname = request.form['name']
         donation_amount = request.form['amount']
-        name = Donor.select().where(Donor.name == uname)
-        if name:
-            Donation.insert(value=donation_amount, donor=name.id).execute()
-            return redirect(url_for('all'))
-        else:
+        try:
+            name = Donor.select().where(Donor.name == uname).get()
+            if name.name == uname:
+                Donation.insert(value=donation_amount, donor=name.id).execute()
+                return redirect(url_for('all'))
+            else:
+                return render_template('add.jinja2', error='Donor not found.')
+        except peewee.DoesNotExist:
             return render_template('add.jinja2', error='Donor not found.')
+
     else:
         return render_template('add.jinja2')
 
